@@ -68,35 +68,12 @@ void XboxOGDevice::process(const uint8_t idx, Gamepad& gamepad)
             gp_in.buttons |= Gamepad::BUTTON_BACK;
         }
 
-        switch (gp_in.dpad)
-        {
-            case Gamepad::DPAD_UP:
-                in_report_.buttons = XboxOG::GP::Buttons::DPAD_UP;
-                break;
-            case Gamepad::DPAD_DOWN:
-                in_report_.buttons = XboxOG::GP::Buttons::DPAD_DOWN;
-                break;
-            case Gamepad::DPAD_LEFT:
-                in_report_.buttons = XboxOG::GP::Buttons::DPAD_LEFT;
-                break;
-            case Gamepad::DPAD_RIGHT:
-                in_report_.buttons = XboxOG::GP::Buttons::DPAD_RIGHT;
-                break;
-            case Gamepad::DPAD_UP_LEFT:
-                in_report_.buttons = XboxOG::GP::Buttons::DPAD_UP | XboxOG::GP::Buttons::DPAD_LEFT;
-                break;
-            case Gamepad::DPAD_UP_RIGHT:
-                in_report_.buttons = XboxOG::GP::Buttons::DPAD_UP | XboxOG::GP::Buttons::DPAD_RIGHT;
-                break;
-            case Gamepad::DPAD_DOWN_LEFT:
-                in_report_.buttons = XboxOG::GP::Buttons::DPAD_DOWN | XboxOG::GP::Buttons::DPAD_LEFT;
-                break;
-            case Gamepad::DPAD_DOWN_RIGHT:
-                in_report_.buttons = XboxOG::GP::Buttons::DPAD_DOWN | XboxOG::GP::Buttons::DPAD_RIGHT;
-                break;
-            default:
-                break;
-        }
+        /* From the bits: a switch over exact values sent no D-pad at all for three directions
+         * held at once (a hat or a worn pad). The Duke's four directions are separate bits. */
+        if (gp_in.dpad & Gamepad::DPAD_UP)    in_report_.buttons |= XboxOG::GP::Buttons::DPAD_UP;
+        if (gp_in.dpad & Gamepad::DPAD_DOWN)  in_report_.buttons |= XboxOG::GP::Buttons::DPAD_DOWN;
+        if (gp_in.dpad & Gamepad::DPAD_LEFT)  in_report_.buttons |= XboxOG::GP::Buttons::DPAD_LEFT;
+        if (gp_in.dpad & Gamepad::DPAD_RIGHT) in_report_.buttons |= XboxOG::GP::Buttons::DPAD_RIGHT;
 
         if (gp_in.buttons & Gamepad::BUTTON_BACK)     in_report_.buttons |= XboxOG::GP::Buttons::BACK;
         if (gp_in.buttons & Gamepad::BUTTON_START)    in_report_.buttons |= XboxOG::GP::Buttons::START;

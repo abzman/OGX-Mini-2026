@@ -40,11 +40,14 @@ struct Interface
 
     std::array<uint8_t, ENDPOINT_SIZE> ep_in_buffer;
     std::array<uint8_t, ENDPOINT_SIZE> ep_out_buffer;
+    /* Rumble sent on the control pipe (SET_REPORT), handed to ep_out_buffer once received */
+    std::array<uint8_t, ENDPOINT_SIZE> ctrl_out_buffer;
 
     Interface()
     {
         ep_out_buffer.fill(0);
         ep_in_buffer.fill(0);
+        ctrl_out_buffer.fill(0);
     }
 };
 
@@ -329,14 +332,17 @@ bool xid_control_xfer_cb(uint8_t rhport, uint8_t stage, tusb_control_request_t c
     {
         if (stage == CONTROL_STAGE_SETUP)
         {
-            //Host is sending a rumble command to control pipe. Queue receipt.
-            tud_control_xfer(rhport, request, interface.ep_out_buffer.data(), std::min(request->wLength, interface.ep_out_size));
+            //Host is sending a rumble command to control pipe. Queue receipt into its own buffer,
+            //not the one an OUT endpoint transfer may be writing.
+            tud_control_xfer(rhport, request, interface.ctrl_out_buffer.data(), std::min(request->wLength, interface.ep_out_size));
         }
         else if (stage == CONTROL_STAGE_ACK)
         {
-            //Receipt complete. Copy data to rumble struct
+            //Receipt complete: hand it on where receive_report() reads the rumble from. Until
+            //now this only worked because the control transfer wrote straight into that buffer.
             TU_LOG1("Got HID report from control pipe for index %02x\n", request->wIndex);
-            // memcpy(interface.out, interface.ep_out_buff, min(request->wLength, sizeof(interface.out)));
+            std::memcpy(interface.ep_out_buffer.data(), interface.ctrl_out_buffer.data(),
+                        std::min(request->wLength, interface.ep_out_size));
         }
         return true;
     }
@@ -504,7 +510,8 @@ bool duke_control_xfer(uint8_t rhport, uint8_t stage, tusb_control_request_t con
         if (stage == CONTROL_STAGE_SETUP)
         {
             TU_LOG1("Sending DUKE_CAPABILITIES_OUT\n");
-            tud_control_xfer(rhport, request, (void *)XboxOG::SB::XID_CAPABILITIES_OUT, sizeof(XboxOG::SB::XID_CAPABILITIES_OUT));
+            /* The gamepad's own 6-byte table (two rumble motors), not the Steel Battalion's */
+            tud_control_xfer(rhport, request, (void *)XboxOG::GP::XID_CAPABILITIES_OUT, sizeof(XboxOG::GP::XID_CAPABILITIES_OUT));
         }
         return true;
     }
