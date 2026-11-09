@@ -358,6 +358,8 @@ Documentation is organized by category in **[Firmware/RP2040/docs/README.md](Fir
 ### ESP32
 Please see the Hardware directory for a diagram showing how to hookup the ESP32 to your RP2040.
 
+**Several Picos on one ESP32 (ESP32_BLUEPAD32_I2C):** each Pico reads two address straps at boot, GPIO 2 and GPIO 3 (internal pull-ups; tie a pin to ground to set it). Both open is **0x01**, as before; GPIO 2 to ground **0x02**, GPIO 3 to ground **0x03**, both **0x04**. On a Pico, GPIO 2 (pin 4) sits next to a ground pin (pin 3). With more than one Pico on the bus, add one pair of 2.2–4.7 kΩ pull-ups to 3.3 V on SDA and SCL. OGX-Mini's own ESP32 firmware talks to 0x01 only; [BlueRetro](https://github.com/abzman/BlueRetro)'s OGX-Mini output drives up to four Picos, one player each.
+
 **Pressure:** on this board the analog outputs (OG Xbox, PS3, DInput) take the pressure bytes the ESP32 sends, and read a button as full when its byte is 0 and its bit is set. OGX-Mini's ESP32 firmware sends 0, so it plays exactly as before; BlueRetro sends a DualShock 3's real pressure.
 
 You will need ESP-IDF v5.1, esptool, python3, and git installed. If you use VSCode, you can install the ESP-IDF extension and configure the project for ESP-IDF v5.1, it'll download everything for you and then you just click the build button at the bottom of the window.

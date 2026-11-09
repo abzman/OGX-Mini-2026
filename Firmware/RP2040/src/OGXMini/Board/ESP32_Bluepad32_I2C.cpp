@@ -49,7 +49,10 @@ static_assert(sizeof(PacketOut) == 8, "i2c_driver_esp::PacketOut size mismatch")
 #pragma pack(pop)
 
 constexpr size_t  MAX_BUFFER_SIZE = std::max(sizeof(PacketOut), sizeof(PacketIn));
-constexpr uint8_t I2C_ADDR = 0x01;
+constexpr uint8_t I2C_ADDR_BASE = 0x01;
+
+/* 0x01 with both straps open, as every Pico answered before them */
+static uint8_t _i2c_addr = I2C_ADDR_BASE;
 
 static Gamepad _gamepads[MAX_GAMEPADS];
 static bool _uart_bridge_mode = false;
@@ -124,9 +127,9 @@ static void core1_task() {
     gpio_pull_up(I2C_SDA_PIN);
     gpio_pull_up(I2C_SCL_PIN);
 
-    i2c_slave_init(I2C_PORT, I2C_ADDR, &slave_handler);
+    i2c_slave_init(I2C_PORT, _i2c_addr, &slave_handler);
 
-    OGXM_LOG("I2C Driver initialized\n");
+    OGXM_LOG("I2C Driver initialized at 0x%02X\n", _i2c_addr);
 
     while (true) {
         tight_loop_contents();
@@ -148,6 +151,26 @@ void run_uart_bridge() {
     board_api::reboot();
 }
 
+/* Address from the straps: a pin tied to ground adds its weight (GPIO 2: 1, GPIO 3: 2). */
+static uint8_t read_i2c_addr() {
+    gpio_init(I2C_ADDR_PIN_1);
+    gpio_init(I2C_ADDR_PIN_2);
+    gpio_pull_up(I2C_ADDR_PIN_1);
+    gpio_pull_up(I2C_ADDR_PIN_2);
+    sleep_us(100); // let the pull-ups charge the pin and whatever wire hangs on it
+
+    uint8_t addr = I2C_ADDR_BASE;
+    if (!gpio_get(I2C_ADDR_PIN_1)) {
+        addr += 1;
+    }
+    if (!gpio_get(I2C_ADDR_PIN_2)) {
+        addr += 2;
+    }
+
+    /* Keep the pull-ups: an open pin then never floats */
+    return addr;
+}
+
 bool update_needed(UserSettings& user_settings) {
 #if defined(OGXM_RETAIL)
     return !user_settings.verify_datetime();
@@ -159,6 +182,7 @@ void esp32_bp32_i2c::initialize() {
     diag::set_latency_gamepad(&_gamepads[0]);  // input-to-use latency in the diagnostics
     board_api::init_board();
     esp32_api::init();
+    _i2c_addr = read_i2c_addr();
 
     /* The ESP32 sends pressure where its controller has some (BlueRetro with a DualShock 3) and
      * 0 elsewhere, which the analog outputs read as the button's bit: analog is always on. */

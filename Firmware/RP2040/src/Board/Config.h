@@ -91,6 +91,10 @@
     #define MODE_SEL_PIN        21
     #define ESP_PROG_PIN        20 // ESP32 IO0
     #define ESP_RST_PIN         8  // ESP32 EN
+    /* I2C address straps, read at boot with pull-ups: both open 0x01, 2 to ground 0x02,
+     * 3 to ground 0x03, both 0x04. Several Picos then share one bus, one player each. */
+    #define I2C_ADDR_PIN_1      2
+    #define I2C_ADDR_PIN_2      3
 
     #if MAX_GAMEPADS > 1
         #undef MAX_GAMEPADS
