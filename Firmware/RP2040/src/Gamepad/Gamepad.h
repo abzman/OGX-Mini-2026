@@ -198,6 +198,14 @@ public:
     //True if both host and device have enabled analog
     inline bool analog_enabled() const { return analog_enabled_.load(std::memory_order_relaxed); }
 
+    /* A button's pressure for an analog output: the pressure byte when the source gave one, else
+     * full or nothing from the button's bit. A source without pressure for a button sends 0 there
+     * and reads as digital; so do buttons a combo adds (Guide's Start/Back/White). */
+    static constexpr uint8_t pressure(uint8_t analog, bool pressed)
+    {
+        return analog ? analog : (pressed ? 0xFF : 0x00);
+    }
+
     inline PadIn get_pad_in()
     {
         mutex_enter_blocking(&pad_in_mutex_);
@@ -338,6 +346,15 @@ public:
         {
             analog_enabled_.store(true);
         }
+    }
+
+    /* For a source that sends pressure bytes with 0 meaning "use the bit" (the ESP32 I2C link):
+     * analog output whatever the profile says. Sources without pressure read exactly as they
+     * would digitally (see pressure()), so this needs no setting. */
+    void set_analog_host_pressure_or_bit()
+    {
+        profile_analog_enabled_ = true;
+        set_analog_host(true);
     }
 
     void set_profile(const UserProfile& user_profile, DeviceDriverType driver = DeviceDriverType::NONE) 

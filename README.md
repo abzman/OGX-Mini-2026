@@ -358,6 +358,8 @@ Documentation is organized by category in **[Firmware/RP2040/docs/README.md](Fir
 ### ESP32
 Please see the Hardware directory for a diagram showing how to hookup the ESP32 to your RP2040.
 
+**Pressure:** on this board the analog outputs (OG Xbox, PS3, DInput) take the pressure bytes the ESP32 sends, and read a button as full when its byte is 0 and its bit is set. OGX-Mini's ESP32 firmware sends 0, so it plays exactly as before; BlueRetro sends a DualShock 3's real pressure.
+
 You will need ESP-IDF v5.1, esptool, python3, and git installed. If you use VSCode, you can install the ESP-IDF extension and configure the project for ESP-IDF v5.1, it'll download everything for you and then you just click the build button at the bottom of the window.
 
 When you build with ESP-IDF, Cmake will run a python script that copies the necessary BTStack files into the components directory, this is needed since BTStack isn't configured as an ESP-IDF component when you download it with git. 

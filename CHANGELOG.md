@@ -3,6 +3,11 @@
 Features and fixes added in this fork. For the latest firmware improvements (PS3, XInput, latency, **SteamOS / Bazzite (STEAM mode — DualSense emulation + touchpad mouse)**, **Pico W Bluetooth / DS4 Classic BT**, **Xbox Series BLE disconnect reboot**, **Switch 2 Pro + Joy-Con 2 BLE**, **Steam Controller 2026 (Triton) BLE**, **DualShock 3 USB→BT auto-pair (`0xF5`)**, **Waveshare RP2350-USB-A wired host fixes (Switch Pro, PS3, Xbox 360 receiver, Razer Atrox XBO)**, **PS3 / PS4 motion passthrough**, etc.), see [Firmware/RP2040/docs/IMPROVEMENTS.md](Firmware/RP2040/docs/IMPROVEMENTS.md).
 
 ---
+### ESP32 I2C board: pressure buttons
+
+- **ESP32_BLUEPAD32_I2C — pressure buttons** — The pressure bytes of `SET_PAD` were ignored: analog turned on only when a USB host driver reported pressure, so anything from the ESP32 was on/off. This board now always runs analog, and the OG Xbox, PS3 and DInput outputs read each button as its pressure byte, or full when the byte is 0 and the button's bit is set (`Gamepad::pressure()`). OGX-Mini's own ESP32 firmware sends 0, so it plays as before (DInput mode now fills its pressure axes from the buttons); an ESP32 that sends real pressure (BlueRetro with a DualShock 3) gets analog A/B/X/Y/Black/White. Buttons a Guide combo adds (White for shutdown) now read full in analog mode too. **Files:** `Gamepad.h`, `ESP32_Bluepad32_I2C.cpp`, `XboxOG_GP.cpp`, `PS3.cpp`, `DInput.cpp`.
+
+---
 ### Xbox 360 multi-adapter support
 
 - Added per-device Xbox 360 USB/XSM3 identity generation using the Pico unique board ID.

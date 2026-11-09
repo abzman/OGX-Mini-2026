@@ -160,6 +160,12 @@ void esp32_bp32_i2c::initialize() {
     board_api::init_board();
     esp32_api::init();
 
+    /* The ESP32 sends pressure where its controller has some (BlueRetro with a DualShock 3) and
+     * 0 elsewhere, which the analog outputs read as the button's bit: analog is always on. */
+    for (uint8_t i = 0; i < MAX_GAMEPADS; ++i) {
+        _gamepads[i].set_analog_host_pressure_or_bit();
+    }
+
     UserSettings& user_settings = UserSettings::get_instance();
     user_settings.initialize_flash();
 

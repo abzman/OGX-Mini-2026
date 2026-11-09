@@ -101,20 +101,20 @@ void DInputDevice::process(const uint8_t idx, Gamepad& gamepad)
 
         if (gamepad.analog_enabled())
         {
-            in_report.up_axis    = gp_in.analog[Gamepad::ANALOG_OFF_UP];
-            in_report.down_axis  = gp_in.analog[Gamepad::ANALOG_OFF_DOWN];
-            in_report.right_axis = gp_in.analog[Gamepad::ANALOG_OFF_RIGHT];
-            in_report.left_axis  = gp_in.analog[Gamepad::ANALOG_OFF_LEFT];
+            in_report.up_axis    = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_UP], gp_in.dpad & Gamepad::DPAD_UP);
+            in_report.down_axis  = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_DOWN], gp_in.dpad & Gamepad::DPAD_DOWN);
+            in_report.right_axis = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_RIGHT], gp_in.dpad & Gamepad::DPAD_RIGHT);
+            in_report.left_axis  = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_LEFT], gp_in.dpad & Gamepad::DPAD_LEFT);
 
-            in_report.triangle_axis = gp_in.analog[Gamepad::ANALOG_OFF_Y];
+            in_report.triangle_axis = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_Y], gp_in.buttons & Gamepad::BUTTON_Y);
             /* Pressure follows the digital bits above (A = cross, B = circle, X = square), like
              * PS3Device; these three were rotated one position. */
-            in_report.circle_axis   = gp_in.analog[Gamepad::ANALOG_OFF_B];
-            in_report.cross_axis    = gp_in.analog[Gamepad::ANALOG_OFF_A];
-            in_report.square_axis   = gp_in.analog[Gamepad::ANALOG_OFF_X];
+            in_report.circle_axis   = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_B], gp_in.buttons & Gamepad::BUTTON_B);
+            in_report.cross_axis    = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_A], gp_in.buttons & Gamepad::BUTTON_A);
+            in_report.square_axis   = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_X], gp_in.buttons & Gamepad::BUTTON_X);
 
-            in_report.r1_axis = gp_in.analog[Gamepad::ANALOG_OFF_RB];
-            in_report.l1_axis = gp_in.analog[Gamepad::ANALOG_OFF_LB];
+            in_report.r1_axis = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_RB], gp_in.buttons & Gamepad::BUTTON_RB);
+            in_report.l1_axis = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_LB], gp_in.buttons & Gamepad::BUTTON_LB);
         }
 
         in_report.joystick_lx = Scale::int16_to_uint8(gp_in.joystick_lx);

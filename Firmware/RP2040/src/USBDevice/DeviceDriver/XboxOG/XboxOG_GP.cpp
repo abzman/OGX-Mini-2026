@@ -105,12 +105,12 @@ void XboxOGDevice::process(const uint8_t idx, Gamepad& gamepad)
 
         if (gamepad.analog_enabled())
         {
-            in_report_.a = gp_in.analog[Gamepad::ANALOG_OFF_A];
-            in_report_.b = gp_in.analog[Gamepad::ANALOG_OFF_B];
-            in_report_.x = gp_in.analog[Gamepad::ANALOG_OFF_X];
-            in_report_.y = gp_in.analog[Gamepad::ANALOG_OFF_Y];
-            in_report_.white = gp_in.analog[Gamepad::ANALOG_OFF_LB];
-            in_report_.black = gp_in.analog[Gamepad::ANALOG_OFF_RB];
+            in_report_.a = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_A], gp_in.buttons & Gamepad::BUTTON_A);
+            in_report_.b = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_B], gp_in.buttons & Gamepad::BUTTON_B);
+            in_report_.x = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_X], gp_in.buttons & Gamepad::BUTTON_X);
+            in_report_.y = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_Y], gp_in.buttons & Gamepad::BUTTON_Y);
+            in_report_.white = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_LB], gp_in.buttons & Gamepad::BUTTON_LB);
+            in_report_.black = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_RB], gp_in.buttons & Gamepad::BUTTON_RB);
         }
         else
         {

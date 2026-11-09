@@ -232,12 +232,12 @@ void PS3Device::process(const uint8_t idx, Gamepad& gamepad)
 
         if (gamepad.analog_enabled())
         {
-            report_in_.triangle_axis = gp_in.analog[Gamepad::ANALOG_OFF_Y];
-            report_in_.circle_axis   = gp_in.analog[Gamepad::ANALOG_OFF_B];
-            report_in_.cross_axis    = gp_in.analog[Gamepad::ANALOG_OFF_A];
-            report_in_.square_axis   = gp_in.analog[Gamepad::ANALOG_OFF_X];
-            report_in_.r1_axis = gp_in.analog[Gamepad::ANALOG_OFF_RB];
-            report_in_.l1_axis = gp_in.analog[Gamepad::ANALOG_OFF_LB];
+            report_in_.triangle_axis = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_Y], gp_in.buttons & Gamepad::BUTTON_Y);
+            report_in_.circle_axis   = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_B], gp_in.buttons & Gamepad::BUTTON_B);
+            report_in_.cross_axis    = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_A], gp_in.buttons & Gamepad::BUTTON_A);
+            report_in_.square_axis   = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_X], gp_in.buttons & Gamepad::BUTTON_X);
+            report_in_.r1_axis = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_RB], gp_in.buttons & Gamepad::BUTTON_RB);
+            report_in_.l1_axis = Gamepad::pressure(gp_in.analog[Gamepad::ANALOG_OFF_LB], gp_in.buttons & Gamepad::BUTTON_LB);
             // D-pad: use digital conversion to avoid noisy analog causing stuck inputs
             report_in_.up_axis    = (gp_in.dpad & Gamepad::DPAD_UP)    ? 0xFF : 0;
             report_in_.down_axis  = (gp_in.dpad & Gamepad::DPAD_DOWN)  ? 0xFF : 0;
