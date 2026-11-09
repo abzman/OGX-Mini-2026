@@ -1,0 +1,149 @@
+diff --git a/src/components/bluepad32/controller/uni_gamepad.c b/src/components/bluepad32/controller/uni_gamepad.c
+index daddf17..54f8866 100644
+--- a/src/components/bluepad32/controller/uni_gamepad.c
++++ b/src/components/bluepad32/controller/uni_gamepad.c
+@@ -125,6 +125,47 @@ static int32_t get_mappings_value_for_pedal(uni_gamepad_mappings_pedal_t pedal_t
+     return -1;
+ }
+
++// Pressure slot of a button / D-pad mapping target, -1 for a button without pressure.
++static int pressure_for_button(uint8_t button) {
++    switch (button) {
++        case UNI_GAMEPAD_MAPPINGS_BUTTON_A:
++            return UNI_GAMEPAD_PRESSURE_BUTTON_A;
++        case UNI_GAMEPAD_MAPPINGS_BUTTON_B:
++            return UNI_GAMEPAD_PRESSURE_BUTTON_B;
++        case UNI_GAMEPAD_MAPPINGS_BUTTON_X:
++            return UNI_GAMEPAD_PRESSURE_BUTTON_X;
++        case UNI_GAMEPAD_MAPPINGS_BUTTON_Y:
++            return UNI_GAMEPAD_PRESSURE_BUTTON_Y;
++        case UNI_GAMEPAD_MAPPINGS_BUTTON_SHOULDER_L:
++            return UNI_GAMEPAD_PRESSURE_BUTTON_SHOULDER_L;
++        case UNI_GAMEPAD_MAPPINGS_BUTTON_SHOULDER_R:
++            return UNI_GAMEPAD_PRESSURE_BUTTON_SHOULDER_R;
++        default:
++            return -1;
++    }
++}
++
++static int pressure_for_dpad(uint8_t dpad) {
++    switch (dpad) {
++        case UNI_GAMEPAD_MAPPINGS_DPAD_UP:
++            return UNI_GAMEPAD_PRESSURE_DPAD_UP;
++        case UNI_GAMEPAD_MAPPINGS_DPAD_DOWN:
++            return UNI_GAMEPAD_PRESSURE_DPAD_DOWN;
++        case UNI_GAMEPAD_MAPPINGS_DPAD_RIGHT:
++            return UNI_GAMEPAD_PRESSURE_DPAD_RIGHT;
++        case UNI_GAMEPAD_MAPPINGS_DPAD_LEFT:
++            return UNI_GAMEPAD_PRESSURE_DPAD_LEFT;
++        default:
++            return -1;
++    }
++}
++
++// Moves a pressure to where its button went. Two buttons on one target keep the larger one.
++static void remap_pressure(uni_gamepad_t* new_gp, int to, uint8_t value) {
++    if (to >= 0 && value > new_gp->pressure[to])
++        new_gp->pressure[to] = value;
++}
++
+ uni_gamepad_t uni_gamepad_remap(const uni_gamepad_t* gp) {
+     uni_gamepad_t new_gp = {0};
+
+@@ -147,6 +188,12 @@ uni_gamepad_t uni_gamepad_remap(const uni_gamepad_t* gp) {
+             new_gp.buttons |= BUTTON_Y;
+         if (gp->buttons & BUTTON_Y)
+             new_gp.buttons |= BUTTON_X;
++
++        // The pressure goes with its button
++        new_gp.pressure[UNI_GAMEPAD_PRESSURE_BUTTON_A] = gp->pressure[UNI_GAMEPAD_PRESSURE_BUTTON_B];
++        new_gp.pressure[UNI_GAMEPAD_PRESSURE_BUTTON_B] = gp->pressure[UNI_GAMEPAD_PRESSURE_BUTTON_A];
++        new_gp.pressure[UNI_GAMEPAD_PRESSURE_BUTTON_X] = gp->pressure[UNI_GAMEPAD_PRESSURE_BUTTON_Y];
++        new_gp.pressure[UNI_GAMEPAD_PRESSURE_BUTTON_Y] = gp->pressure[UNI_GAMEPAD_PRESSURE_BUTTON_X];
+         return new_gp;
+     }
+
+@@ -213,6 +260,20 @@ uni_gamepad_t uni_gamepad_remap(const uni_gamepad_t* gp) {
+     new_gp.brake = get_mappings_value_for_pedal(map.brake, gp);
+     new_gp.throttle = get_mappings_value_for_pedal(map.throttle, gp);
+
++    // The pressure goes with its button; a button moved to one without pressure loses it.
++    remap_pressure(&new_gp, pressure_for_button(map.button_a), gp->pressure[UNI_GAMEPAD_PRESSURE_BUTTON_A]);
++    remap_pressure(&new_gp, pressure_for_button(map.button_b), gp->pressure[UNI_GAMEPAD_PRESSURE_BUTTON_B]);
++    remap_pressure(&new_gp, pressure_for_button(map.button_x), gp->pressure[UNI_GAMEPAD_PRESSURE_BUTTON_X]);
++    remap_pressure(&new_gp, pressure_for_button(map.button_y), gp->pressure[UNI_GAMEPAD_PRESSURE_BUTTON_Y]);
++    remap_pressure(&new_gp, pressure_for_button(map.button_shoulder_l),
++                   gp->pressure[UNI_GAMEPAD_PRESSURE_BUTTON_SHOULDER_L]);
++    remap_pressure(&new_gp, pressure_for_button(map.button_shoulder_r),
++                   gp->pressure[UNI_GAMEPAD_PRESSURE_BUTTON_SHOULDER_R]);
++    remap_pressure(&new_gp, pressure_for_dpad(map.dpad_up), gp->pressure[UNI_GAMEPAD_PRESSURE_DPAD_UP]);
++    remap_pressure(&new_gp, pressure_for_dpad(map.dpad_down), gp->pressure[UNI_GAMEPAD_PRESSURE_DPAD_DOWN]);
++    remap_pressure(&new_gp, pressure_for_dpad(map.dpad_left), gp->pressure[UNI_GAMEPAD_PRESSURE_DPAD_LEFT]);
++    remap_pressure(&new_gp, pressure_for_dpad(map.dpad_right), gp->pressure[UNI_GAMEPAD_PRESSURE_DPAD_RIGHT]);
++
+     return new_gp;
+ }
+
+diff --git a/src/components/bluepad32/include/controller/uni_gamepad.h b/src/components/bluepad32/include/controller/uni_gamepad.h
+index fdad916..18ac12c 100644
+--- a/src/components/bluepad32/include/controller/uni_gamepad.h
++++ b/src/components/bluepad32/include/controller/uni_gamepad.h
+@@ -66,6 +66,23 @@ typedef enum {
+     UNI_GAMEPAD_MAPPINGS_PEDAL_THROTTLE,
+ } uni_gamepad_mappings_pedal_t;
+
++// Index in uni_gamepad_t.pressure of each pressure-sensitive button.
++// L2 / R2 pressure is brake / throttle.
++typedef enum {
++    UNI_GAMEPAD_PRESSURE_DPAD_UP,
++    UNI_GAMEPAD_PRESSURE_DPAD_DOWN,
++    UNI_GAMEPAD_PRESSURE_DPAD_RIGHT,
++    UNI_GAMEPAD_PRESSURE_DPAD_LEFT,
++    UNI_GAMEPAD_PRESSURE_BUTTON_A,
++    UNI_GAMEPAD_PRESSURE_BUTTON_B,
++    UNI_GAMEPAD_PRESSURE_BUTTON_X,
++    UNI_GAMEPAD_PRESSURE_BUTTON_Y,
++    UNI_GAMEPAD_PRESSURE_BUTTON_SHOULDER_L,
++    UNI_GAMEPAD_PRESSURE_BUTTON_SHOULDER_R,
++
++    UNI_GAMEPAD_PRESSURE_COUNT,
++} uni_gamepad_pressure_t;
++
+ // DPAD constants.
+ enum {
+     DPAD_UP = BIT(UNI_GAMEPAD_MAPPINGS_DPAD_UP),
+@@ -165,6 +182,11 @@ typedef struct {
+
+     int32_t gyro[3];
+     int32_t accel[3];
++
++    // Pressure of the D-pad, A/B/X/Y and shoulder buttons, 0-255, by uni_gamepad_pressure_t.
++    // Only gamepads with pressure-sensitive buttons fill it (DualShock 3); on every other
++    // gamepad it stays 0, so 0 means "no pressure, use the button's bit".
++    uint8_t pressure[UNI_GAMEPAD_PRESSURE_COUNT];
+ } uni_gamepad_t;
+
+ // Represents the mapping. Each entry contains the new button to be used,
+diff --git a/src/components/bluepad32/parser/uni_hid_parser_ds3.c b/src/components/bluepad32/parser/uni_hid_parser_ds3.c
+index e9b7884..ab1f80d 100644
+--- a/src/components/bluepad32/parser/uni_hid_parser_ds3.c
++++ b/src/components/bluepad32/parser/uni_hid_parser_ds3.c
+@@ -185,6 +185,18 @@ void uni_hid_parser_ds3_parse_input_report(uni_hid_device_t* d, const uint8_t* r
+     ctl->gamepad.brake = r->brake * 4;
+     ctl->gamepad.throttle = r->throttle * 4;
+
++    // Pressure of the other pressure-sensitive buttons
++    ctl->gamepad.pressure[UNI_GAMEPAD_PRESSURE_DPAD_UP] = r->dpad_up;
++    ctl->gamepad.pressure[UNI_GAMEPAD_PRESSURE_DPAD_DOWN] = r->dpad_down;
++    ctl->gamepad.pressure[UNI_GAMEPAD_PRESSURE_DPAD_RIGHT] = r->dpad_right;
++    ctl->gamepad.pressure[UNI_GAMEPAD_PRESSURE_DPAD_LEFT] = r->dpad_left;
++    ctl->gamepad.pressure[UNI_GAMEPAD_PRESSURE_BUTTON_A] = r->south;  // cross
++    ctl->gamepad.pressure[UNI_GAMEPAD_PRESSURE_BUTTON_B] = r->east;   // circle
++    ctl->gamepad.pressure[UNI_GAMEPAD_PRESSURE_BUTTON_X] = r->west;   // square
++    ctl->gamepad.pressure[UNI_GAMEPAD_PRESSURE_BUTTON_Y] = r->north;  // triangle
++    ctl->gamepad.pressure[UNI_GAMEPAD_PRESSURE_BUTTON_SHOULDER_L] = r->l1;
++    ctl->gamepad.pressure[UNI_GAMEPAD_PRESSURE_BUTTON_SHOULDER_R] = r->r1;
++
+     // Battery values:
+     //   0x01 : Shutdown
+     //   0x02 : Dying
