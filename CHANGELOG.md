@@ -3,6 +3,13 @@
 Features and fixes added in this fork. For the latest firmware improvements (PS3, XInput, latency, **SteamOS / Bazzite (STEAM mode — DualSense emulation + touchpad mouse)**, **Pico W Bluetooth / DS4 Classic BT**, **Xbox Series BLE disconnect reboot**, **Switch 2 Pro + Joy-Con 2 BLE**, **Steam Controller 2026 (Triton) BLE**, **DualShock 3 USB→BT auto-pair (`0xF5`)**, **Waveshare RP2350-USB-A wired host fixes (Switch Pro, PS3, Xbox 360 receiver, Razer Atrox XBO)**, **PS3 / PS4 motion passthrough**, etc.), see [Firmware/RP2040/docs/IMPROVEMENTS.md](Firmware/RP2040/docs/IMPROVEMENTS.md).
 
 ---
+### DualShock 3 pressure over Bluetooth
+
+- **Bluepad32 — `uni_gamepad_t.pressure[]`** — The DS3 parser read the pressure of the D-pad, face and shoulder buttons but `uni_gamepad_t` had nowhere to put it, so only L2/R2 survived (as the triggers). New patch `bluepad32_gamepad_pressure.diff` (sent upstream to ricardoquesada/bluepad32) adds a 10-byte `pressure[]` the DS3 parser fills; every other pad leaves it at 0, and remapping moves it with its button. **Files:** `patches/bluepad32_gamepad_pressure.diff`, `cmake/patch_libs.cmake`.
+- **ESP32 firmware** — `SET_PAD` carries the DS3's pressure in its `analog[]` bytes (they were reserved on the ESP32 side), each where the profile maps its button. With the Pico's pressure rule (below), a DS3 on the ESP32 now gives analog A/B/X/Y/Black/White on the OG Xbox and pressure in PS3/DInput mode. **Files:** `I2CDriver.h`, `BTManager_BP32.cpp`, `Gamepad.h` (ESP32).
+- **Pico W / Pico 2 W** — Same for a DS3 paired to the Pico itself: its pressure goes into `analog[]` and analog output turns on when a pad with pressure shows up. **Files:** `Bluepad32.cpp`, `Gamepad.h`.
+
+---
 ### ESP32 I2C board: pressure, address straps; OG Xbox fixes
 
 - **ESP32_BLUEPAD32_I2C — pressure buttons** — The pressure bytes of `SET_PAD` were ignored: analog turned on only when a USB host driver reported pressure, so anything from the ESP32 was on/off. This board now always runs analog, and the OG Xbox, PS3 and DInput outputs read each button as its pressure byte, or full when the byte is 0 and the button's bit is set (`Gamepad::pressure()`). OGX-Mini's own ESP32 firmware sends 0, so it plays as before (DInput mode now fills its pressure axes from the buttons); an ESP32 that sends real pressure (BlueRetro with a DualShock 3) gets analog A/B/X/Y/Black/White. Buttons a Guide combo adds (White for shutdown) now read full in analog mode too. **Files:** `Gamepad.h`, `ESP32_Bluepad32_I2C.cpp`, `XboxOG_GP.cpp`, `PS3.cpp`, `DInput.cpp`.

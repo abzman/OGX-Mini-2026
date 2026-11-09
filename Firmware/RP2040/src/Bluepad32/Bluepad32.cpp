@@ -1387,6 +1387,31 @@ static void controller_data_cb(uni_hid_device_t* device, uni_controller_t* contr
             gp_in.buttons |= gamepad->MAP_BUTTON_MISC;
     }
 
+    /* Pressure (a DualShock 3; 0 from every other pad), each where its button is mapped. Analog
+     * outputs read a 0 as the button's bit (Gamepad::pressure()), so turning analog on for the
+     * first pad that has pressure changes nothing for the others. */
+    {
+        const uint8_t* pressure = uni_gp->pressure;
+        bool has_pressure = false;
+        for (int i = 0; i < UNI_GAMEPAD_PRESSURE_COUNT; i++) {
+            has_pressure |= pressure[i] != 0;
+        }
+        if (has_pressure) {
+            gamepad->set_analog_host(true);
+            uint8_t* analog = gp_in.analog;
+            Gamepad::add_pressure(analog, Gamepad::analog_slot_for_dpad(gamepad->MAP_DPAD_UP),    pressure[UNI_GAMEPAD_PRESSURE_DPAD_UP]);
+            Gamepad::add_pressure(analog, Gamepad::analog_slot_for_dpad(gamepad->MAP_DPAD_DOWN),  pressure[UNI_GAMEPAD_PRESSURE_DPAD_DOWN]);
+            Gamepad::add_pressure(analog, Gamepad::analog_slot_for_dpad(gamepad->MAP_DPAD_LEFT),  pressure[UNI_GAMEPAD_PRESSURE_DPAD_LEFT]);
+            Gamepad::add_pressure(analog, Gamepad::analog_slot_for_dpad(gamepad->MAP_DPAD_RIGHT), pressure[UNI_GAMEPAD_PRESSURE_DPAD_RIGHT]);
+            Gamepad::add_pressure(analog, Gamepad::analog_slot_for_button(gamepad->MAP_BUTTON_A),  pressure[UNI_GAMEPAD_PRESSURE_BUTTON_A]);
+            Gamepad::add_pressure(analog, Gamepad::analog_slot_for_button(gamepad->MAP_BUTTON_B),  pressure[UNI_GAMEPAD_PRESSURE_BUTTON_B]);
+            Gamepad::add_pressure(analog, Gamepad::analog_slot_for_button(gamepad->MAP_BUTTON_X),  pressure[UNI_GAMEPAD_PRESSURE_BUTTON_X]);
+            Gamepad::add_pressure(analog, Gamepad::analog_slot_for_button(gamepad->MAP_BUTTON_Y),  pressure[UNI_GAMEPAD_PRESSURE_BUTTON_Y]);
+            Gamepad::add_pressure(analog, Gamepad::analog_slot_for_button(gamepad->MAP_BUTTON_LB), pressure[UNI_GAMEPAD_PRESSURE_BUTTON_SHOULDER_L]);
+            Gamepad::add_pressure(analog, Gamepad::analog_slot_for_button(gamepad->MAP_BUTTON_RB), pressure[UNI_GAMEPAD_PRESSURE_BUTTON_SHOULDER_R]);
+        }
+    }
+
     // Check for disconnect combo: Start+Select for most controllers, L3+R3 for OUYA (no Start/Select)
     /* Hold time is measured in ms (report rates differ per pad) and matches the 3 s of the
      * mode-change combos. */

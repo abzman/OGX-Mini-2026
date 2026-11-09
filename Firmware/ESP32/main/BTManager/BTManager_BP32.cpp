@@ -121,6 +121,20 @@ void BTManager::controller_data_cb(uni_hid_device_t* bp_device, uni_controller_t
     if (uni_gp->misc_buttons & MISC_BUTTON_SYSTEM)  packet_in.buttons |= mapper.BUTTON_SYS;
     if (uni_gp->misc_buttons & MISC_BUTTON_CAPTURE) packet_in.buttons |= mapper.BUTTON_MISC;
 
+    /* Pressure (a DualShock 3; 0 from every other pad), each where its button is mapped */
+    const uint8_t* pressure = uni_gp->pressure;
+    uint8_t* analog = packet_in.analog.data();
+    Gamepad::add_pressure(analog, Gamepad::analog_slot_for_dpad(mapper.DPAD_UP),    pressure[UNI_GAMEPAD_PRESSURE_DPAD_UP]);
+    Gamepad::add_pressure(analog, Gamepad::analog_slot_for_dpad(mapper.DPAD_DOWN),  pressure[UNI_GAMEPAD_PRESSURE_DPAD_DOWN]);
+    Gamepad::add_pressure(analog, Gamepad::analog_slot_for_dpad(mapper.DPAD_LEFT),  pressure[UNI_GAMEPAD_PRESSURE_DPAD_LEFT]);
+    Gamepad::add_pressure(analog, Gamepad::analog_slot_for_dpad(mapper.DPAD_RIGHT), pressure[UNI_GAMEPAD_PRESSURE_DPAD_RIGHT]);
+    Gamepad::add_pressure(analog, Gamepad::analog_slot_for_button(mapper.BUTTON_A),  pressure[UNI_GAMEPAD_PRESSURE_BUTTON_A]);
+    Gamepad::add_pressure(analog, Gamepad::analog_slot_for_button(mapper.BUTTON_B),  pressure[UNI_GAMEPAD_PRESSURE_BUTTON_B]);
+    Gamepad::add_pressure(analog, Gamepad::analog_slot_for_button(mapper.BUTTON_X),  pressure[UNI_GAMEPAD_PRESSURE_BUTTON_X]);
+    Gamepad::add_pressure(analog, Gamepad::analog_slot_for_button(mapper.BUTTON_Y),  pressure[UNI_GAMEPAD_PRESSURE_BUTTON_Y]);
+    Gamepad::add_pressure(analog, Gamepad::analog_slot_for_button(mapper.BUTTON_LB), pressure[UNI_GAMEPAD_PRESSURE_BUTTON_SHOULDER_L]);
+    Gamepad::add_pressure(analog, Gamepad::analog_slot_for_button(mapper.BUTTON_RB), pressure[UNI_GAMEPAD_PRESSURE_BUTTON_SHOULDER_R]);
+
     packet_in.trigger_l = mapper.scale_trigger_l<10>(static_cast<uint16_t>(uni_gp->brake));
     packet_in.trigger_r = mapper.scale_trigger_r<10>(static_cast<uint16_t>(uni_gp->throttle));
 

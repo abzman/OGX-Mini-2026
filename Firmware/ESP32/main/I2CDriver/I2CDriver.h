@@ -38,7 +38,10 @@ public:
         int16_t joystick_ly{0};
         int16_t joystick_rx{0};
         int16_t joystick_ry{0};
-        std::array<uint8_t, 15> reserved1{0};
+        /* Pressure of the D-pad, A/B/X/Y and LB/RB (Gamepad::ANALOG_OFF_*); 0 for a button
+         * without pressure, which the Pico reads from its bit */
+        std::array<uint8_t, 10> analog{0};
+        std::array<uint8_t, 5> reserved1{0};
     };
     static_assert(sizeof(PacketIn) == 32, "PacketIn is misaligned");
 

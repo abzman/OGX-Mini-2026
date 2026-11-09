@@ -59,6 +59,44 @@ public:
     static constexpr uint8_t ANALOG_OFF_LB    = 8;
     static constexpr uint8_t ANALOG_OFF_RB    = 9;
 
+    /* The analog[] slot of a D-pad direction or a button, as a mapping gives it: where a
+     * pressure goes once its button is remapped. -1 for one without pressure (or a combination
+     * of several). */
+    static constexpr int analog_slot_for_dpad(uint8_t dpad)
+    {
+        switch (dpad)
+        {
+            case DPAD_UP:    return ANALOG_OFF_UP;
+            case DPAD_DOWN:  return ANALOG_OFF_DOWN;
+            case DPAD_LEFT:  return ANALOG_OFF_LEFT;
+            case DPAD_RIGHT: return ANALOG_OFF_RIGHT;
+            default:         return -1;
+        }
+    }
+
+    static constexpr int analog_slot_for_button(uint16_t button)
+    {
+        switch (button)
+        {
+            case BUTTON_A:  return ANALOG_OFF_A;
+            case BUTTON_B:  return ANALOG_OFF_B;
+            case BUTTON_X:  return ANALOG_OFF_X;
+            case BUTTON_Y:  return ANALOG_OFF_Y;
+            case BUTTON_LB: return ANALOG_OFF_LB;
+            case BUTTON_RB: return ANALOG_OFF_RB;
+            default:        return -1;
+        }
+    }
+
+    /* Two buttons mapped onto one keep the larger pressure */
+    static inline void add_pressure(uint8_t* analog, int slot, uint8_t value)
+    {
+        if (slot >= 0 && value > analog[slot])
+        {
+            analog[slot] = value;
+        }
+    }
+
     //Mappings used by host to set buttons
 
     uint8_t MAP_DPAD_UP         = DPAD_UP        ;
